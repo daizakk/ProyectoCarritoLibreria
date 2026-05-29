@@ -1,0 +1,73 @@
+/* Contenedor principal del header */
+.header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ padding: 1rem 2rem;
+ background-color: #1e293b; /* azul oscuro */
+ color: white;
+ position: sticky;
+ top: 0;
+ z-index: 1500;
+}
+
+/* Título */
+.header h1 {
+ margin: 0;
+ font-size: 1.4rem;
+}
+
+/* Contenedor derecho con usuario y carrito */
+.header-right {
+ display: flex;
+ align-items: center;
+ gap: 2rem;
+}
+
+/* Info del usuario */
+.user-info {
+ display: flex;
+ align-items: center;
+ gap: 1rem;
+ font-size: 0.95rem;
+}
+
+.user-info span {
+ color: #e2e8f0;
+}
+
+/* Botón logout */
+.logout-btn {
+ background-color: #ef4444; /* rojo */
+ color: white;
+ border: none;
+ border-radius: 6px;
+ padding: 0.5rem 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ font-size: 0.9rem;
+ transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+ background-color: #dc2626;
+}
+
+/* Botón del carrito */
+.cart-btn {
+ background-color: #f59e0b; /* amarillo */
+ color: #1e293b;
+ border: none;
+ border-radius: 6px;
+ padding: 0.5rem 1rem;
+ font-weight: bold;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ gap: 0.5rem;
+ transition: background-color 0.3s;
+}
+
+.cart-btn:hover {
+ background-color: #fbbf24;
+}

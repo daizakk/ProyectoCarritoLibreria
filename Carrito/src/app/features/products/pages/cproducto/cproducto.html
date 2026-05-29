@@ -1,0 +1,140 @@
+<h1>Catálogo de libros</h1>
+
+<section class="toolbar">
+  <div class="search-wrapper">
+    <span class="search-icon">🔍</span>
+    <input
+      type="text"
+      placeholder="Buscar por título, autor o sinopsis..."
+      [value]="searchText()"
+      (input)="searchText.set($any($event.target).value)"
+    />
+  </div>
+
+  <div class="filters">
+    <div class="filter-chip" [class.active]="selectedFormato() !== 'Todos'">
+      <label>📖 Formato</label>
+      <select [value]="selectedFormato()" (change)="selectedFormato.set($any($event.target).value)">
+        @for (formato of formatos(); track formato) {
+          <option [value]="formato">{{ formato }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-chip" [class.active]="selectedStock() !== 'todos'">
+      <label>📦 Disponibilidad</label>
+      <select [value]="selectedStock()" (change)="selectedStock.set($any($event.target).value)">
+        <option value="todos">Todos</option>
+        <option value="con-stock">Con stock</option>
+        <option value="sin-stock">Sin stock</option>
+      </select>
+    </div>
+
+    <div class="filter-chip" [class.active]="sortOption() !== 'default'">
+      <label>💰 Precio</label>
+      <select [value]="sortOption()" (change)="sortOption.set($any($event.target).value)">
+        <option value="default">Sin ordenar</option>
+        <option value="price-asc">Menor a mayor</option>
+        <option value="price-desc">Mayor a menor</option>
+      </select>
+    </div>
+
+    @if (searchText() || selectedFormato() !== 'Todos' || selectedStock() !== 'todos' || sortOption() !== 'default') {
+      <button class="btn-reset" (click)="searchText.set(''); selectedFormato.set('Todos'); selectedStock.set('todos'); sortOption.set('default')">
+        ✕ Limpiar filtros
+      </button>
+    }
+  </div>
+</section>
+
+@if (loading()) {
+  <p class="loading">Cargando libros...</p>
+}
+
+@if (!loading() && filteredProducts().length === 0) {
+  <p class="no-results">No se encontraron libros con esos filtros.</p>
+}
+
+<section class="products">
+  @for (product of filteredProducts(); track product.id) {
+    <article (click)="openDetail(product)">
+      <img
+        [src]="getImageUrl(product)"
+        [alt]="product.titulo"
+        class="cover"
+        (error)="onImgError($event)"
+      />
+      <h3>{{ product.titulo }}</h3>
+      <p class="autor">{{ product.autor }}</p>
+      <p class="sinopsis">{{ product.sinopsis }}</p>
+      <p class="precio">{{ product.precio | currency:'EUR' }}</p>
+      <p class="stock">Disponibles: {{ product.stock }}</p>
+
+      <button (click)="addToCart(product); $event.stopPropagation()" [disabled]="product.stock === 0">
+        {{ product.stock === 0 ? 'Sin stock' : 'Añadir al carrito' }}
+      </button>
+    </article>
+  }
+</section>
+
+<!-- Modal Ficha Detallada -->
+@if (selectedProduct()) {
+  <div class="detail-overlay" (click)="closeDetail()">
+    <div class="detail-modal" (click)="$event.stopPropagation()">
+
+      <button class="detail-close" (click)="closeDetail()">✕</button>
+
+      <div class="detail-content">
+        <div class="detail-left">
+          <img
+            [src]="getImageUrl(selectedProduct()!)"
+            [alt]="selectedProduct()!.titulo"
+            class="detail-cover"
+            (error)="onImgError($event)"
+          />
+          <p class="detail-precio">{{ selectedProduct()!.precio | currency:'EUR' }}</p>
+          <p class="detail-stock" [class.sin-stock]="selectedProduct()!.stock === 0">
+            {{ selectedProduct()!.stock === 0 ? '❌ Sin stock' : '✅ ' + selectedProduct()!.stock + ' disponibles' }}
+          </p>
+          <button
+            class="detail-btn-cart"
+            (click)="addToCart(selectedProduct()!)"
+            [disabled]="selectedProduct()!.stock === 0">
+            {{ selectedProduct()!.stock === 0 ? 'Sin stock' : '🛒 Añadir al carrito' }}
+          </button>
+        </div>
+
+        <div class="detail-right">
+          <h2>{{ selectedProduct()!.titulo }}</h2>
+          <p class="detail-autor">{{ selectedProduct()!.autor }}</p>
+
+          <div class="detail-meta">
+            <div class="meta-item">
+              <span class="meta-label">Editorial</span>
+              <span class="meta-value">{{ selectedProduct()!.editorial }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Formato</span>
+              <span class="meta-value">{{ selectedProduct()!.formato }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Edición</span>
+              <span class="meta-value">{{ selectedProduct()!.edicion }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">ISBN</span>
+              <span class="meta-value">{{ selectedProduct()!.isbn }}</span>
+            </div>
+          </div>
+
+          <div class="detail-sinopsis">
+            <h4>Sinopsis</h4>
+            <p>{{ selectedProduct()!.sinopsis }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<app-cart/>

@@ -1,0 +1,28 @@
+<aside class="history-panel">
+  <h3>Historial de compras</h3>
+
+  <ng-container *ngIf="orders().length === 0; else historyList">
+    <p>No hay compras todavía.</p>
+  </ng-container>
+
+  <ng-template #historyList>
+    <div *ngFor="let order of orders(); trackBy: trackByOrderId" class="history-item">
+      <div class="history-header">
+        <div class="history-header-left">
+          <span class="order-id">Pedido #{{ order.id }}</span>
+          <span class="order-date">{{ order.date }}</span>
+        </div>
+        <button class="btn-pdf" (click)="descargarFactura(order)" title="Descargar factura">
+          📄 Factura
+        </button>
+      </div>
+      <p class="order-total">Total: {{ order.total | currency:'EUR' }}</p>
+      <ul>
+        <li *ngFor="let item of order.items; trackBy: trackByProductId">
+          {{ item.product.title }} × {{ item.quantity }}
+          ({{ item.product.price | currency:'EUR' }} c/u · {{ (item.product.price * item.quantity) | currency:'EUR' }} total)
+        </li>
+      </ul>
+    </div>
+  </ng-template>
+</aside>

@@ -1,0 +1,208 @@
+<h1>Panel de Administración</h1>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button [class.tab-active]="activeTab() === 'libros'" (click)="activeTab.set('libros')">
+    📚 Gestión de libros
+  </button>
+  <button [class.tab-active]="activeTab() === 'usuarios'" (click)="activeTab.set('usuarios')">
+    👥 Usuarios
+  </button>
+</div>
+
+<!-- ── TAB LIBROS ── -->
+@if (activeTab() === 'libros') {
+  <section class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar por título o autor..."
+        [value]="searchText()"
+        (input)="searchText.set($any($event.target).value)"
+      />
+    </div>
+    <div class="filters">
+      <div class="filter-chip" [class.active]="selectedFormato() !== 'Todos'">
+        <label>📖 Formato</label>
+        <select [value]="selectedFormato()" (change)="selectedFormato.set($any($event.target).value)">
+          @for (formato of formatos(); track formato) {
+            <option [value]="formato">{{ formato }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-chip" [class.active]="selectedStock() !== 'todos'">
+        <label>📦 Disponibilidad</label>
+        <select [value]="selectedStock()" (change)="selectedStock.set($any($event.target).value)">
+          <option value="todos">Todos</option>
+          <option value="con-stock">Con stock</option>
+          <option value="sin-stock">Sin stock</option>
+        </select>
+      </div>
+      <div class="filter-chip" [class.active]="sortOption() !== 'default'">
+        <label>💰 Precio</label>
+        <select [value]="sortOption()" (change)="sortOption.set($any($event.target).value)">
+          <option value="default">Sin ordenar</option>
+          <option value="price-asc">Menor a mayor</option>
+          <option value="price-desc">Mayor a menor</option>
+        </select>
+      </div>
+      @if (searchText() || selectedFormato() !== 'Todos' || selectedStock() !== 'todos' || sortOption() !== 'default') {
+        <button class="btn-reset" (click)="searchText.set(''); selectedFormato.set('Todos'); selectedStock.set('todos'); sortOption.set('default')">
+          ✕ Limpiar filtros
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (loading()) { <p class="loading">Cargando libros...</p> }
+  @if (!loading() && filteredProducts().length === 0) {
+    <p class="no-results">No se encontraron libros con esos filtros.</p>
+  }
+
+  <section class="products">
+    @for (product of filteredProducts(); track product.id) {
+      <article>
+        <img [src]="getImageUrl(product)" [alt]="product.titulo" class="cover" (error)="onImgError($event)" />
+        <h3>{{ product.titulo }}</h3>
+        <p class="autor">{{ product.autor }}</p>
+        <p class="sinopsis">{{ product.sinopsis }}</p>
+        <p class="precio">{{ product.precio | currency:'EUR' }}</p>
+        <p class="stock">Disponibles: {{ product.stock }}</p>
+        <div class="admin-buttons">
+          <button class="btn-edit" (click)="openEdit(product)">✏️ Editar</button>
+          <button class="btn-delete" (click)="deleteProduct(product)">🗑️ Eliminar</button>
+        </div>
+      </article>
+    }
+    <article class="add-card" (click)="openAdd()">
+      <div class="add-icon">＋</div>
+      <p>Añadir nuevo libro</p>
+    </article>
+  </section>
+}
+
+<!-- ── TAB USUARIOS ── -->
+@if (activeTab() === 'usuarios') {
+
+  <!-- Lista de usuarios -->
+  @if (!selectedUser()) {
+    <section class="usuarios-list">
+      <h2>Usuarios registrados</h2>
+      @if (usuarios().length === 0) {
+        <p class="no-results">No hay usuarios registrados.</p>
+      }
+      @for (user of usuarios(); track user.id) {
+        <div class="user-card" (click)="verHistorial(user)">
+          <div class="user-info">
+            <span class="user-nombre">{{ user.nombre || user.email }}</span>
+            <span class="user-email">{{ user.email }}</span>
+          </div>
+          <span class="user-arrow">Ver historial →</span>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Historial del usuario seleccionado -->
+  @if (selectedUser()) {
+    <section class="user-orders">
+      <div class="orders-header">
+        <button class="btn-back" (click)="volverAUsuarios()">← Volver</button>
+        <h2>Historial de {{ selectedUser().nombre || selectedUser().email }}</h2>
+      </div>
+
+      @if (loadingOrders()) {
+        <p class="loading">Cargando pedidos...</p>
+      }
+
+      @if (!loadingOrders() && userOrders().length === 0) {
+        <p class="no-results">Este usuario no tiene pedidos.</p>
+      }
+
+      @for (order of userOrders(); track order.id) {
+        <div class="order-card">
+          <div class="order-header">
+            <span class="order-id">Pedido #{{ order.id }}</span>
+            <span class="order-date">{{ order.fechaPedido | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="order-estado">{{ order.estado }}</span>
+          </div>
+          <ul class="order-items">
+            @for (detalle of order.detalles; track detalle.libroId) {
+              <li>
+                <span>{{ detalle.titulo }} × {{ detalle.cantidad }}</span>
+                <span>{{ detalle.precioUnitario * detalle.cantidad | currency:'EUR' }}</span>
+              </li>
+            }
+          </ul>
+          <p class="order-total">Total: <strong>{{ order.total | currency:'EUR' }}</strong></p>
+        </div>
+      }
+    </section>
+  }
+}
+
+<!-- Modales (fuera de los tabs para que funcionen siempre) -->
+@if (showEditModal()) {
+  <div class="modal-overlay" (click)="showEditModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Editar libro</h2>
+      <label>ISBN</label>
+      <input type="text" [value]="editForm().isbn" disabled />
+      <label>Título</label>
+      <input type="text" [value]="editForm().titulo" (input)="updateEditForm('titulo', $any($event.target).value)" />
+      <label>Autor</label>
+      <input type="text" [value]="editForm().autor" (input)="updateEditForm('autor', $any($event.target).value)" />
+      <label>Editorial</label>
+      <input type="text" [value]="editForm().editorial" (input)="updateEditForm('editorial', $any($event.target).value)" />
+      <label>Formato</label>
+      <input type="text" [value]="editForm().formato" (input)="updateEditForm('formato', $any($event.target).value)" />
+      <label>Edición</label>
+      <input type="text" [value]="editForm().edicion" (input)="updateEditForm('edicion', $any($event.target).value)" />
+      <label>Precio (€)</label>
+      <input type="number" [value]="editForm().precio" (input)="updateEditForm('precio', +$any($event.target).value)" min="0" step="0.01" />
+      <label>Stock</label>
+      <input type="number" [value]="editForm().stock" (input)="updateEditForm('stock', +$any($event.target).value)" min="0" />
+      <label>URL Imagen</label>
+      <input type="text" [value]="editForm().imagenUrl" (input)="updateEditForm('imagenUrl', $any($event.target).value)" />
+      <label>Sinopsis</label>
+      <textarea [value]="editForm().sinopsis" (input)="updateEditForm('sinopsis', $any($event.target).value)" rows="5"></textarea>
+      <div class="modal-actions">
+        <button class="btn-save" (click)="saveEdit()">Guardar</button>
+        <button class="btn-cancel" (click)="showEditModal.set(false)">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showAddModal()) {
+  <div class="modal-overlay" (click)="showAddModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Añadir nuevo libro</h2>
+      <label>ISBN *</label>
+      <input type="text" [value]="newBook().isbn" (input)="updateNewBook('isbn', $any($event.target).value)" />
+      <label>Título *</label>
+      <input type="text" [value]="newBook().titulo" (input)="updateNewBook('titulo', $any($event.target).value)" />
+      <label>Autor *</label>
+      <input type="text" [value]="newBook().autor" (input)="updateNewBook('autor', $any($event.target).value)" />
+      <label>Editorial</label>
+      <input type="text" [value]="newBook().editorial" (input)="updateNewBook('editorial', $any($event.target).value)" />
+      <label>Formato</label>
+      <input type="text" [value]="newBook().formato" (input)="updateNewBook('formato', $any($event.target).value)" />
+      <label>Edición</label>
+      <input type="text" [value]="newBook().edicion" (input)="updateNewBook('edicion', $any($event.target).value)" />
+      <label>Precio (€)</label>
+      <input type="number" [value]="newBook().precio" (input)="updateNewBook('precio', +$any($event.target).value)" min="0" step="0.01" />
+      <label>Stock</label>
+      <input type="number" [value]="newBook().stock" (input)="updateNewBook('stock', +$any($event.target).value)" min="0" />
+      <label>URL Imagen</label>
+      <input type="text" [value]="newBook().imagenUrl" (input)="updateNewBook('imagenUrl', $any($event.target).value)" />
+      <label>Sinopsis</label>
+      <textarea [value]="newBook().sinopsis" (input)="updateNewBook('sinopsis', $any($event.target).value)" rows="5"></textarea>
+      <div class="modal-actions">
+        <button class="btn-save" (click)="saveAdd()">Añadir</button>
+        <button class="btn-cancel" (click)="showAddModal.set(false)">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
