@@ -20,14 +20,15 @@ export class SproductService {
     );
   }
 
-  update(id: number, dto: any) {
-    return this.http.put(`${this.API}/${id}`, dto);
+  update(isbn: string, dto: any) {
+    return this.http.put(`${this.API}/isbn/${isbn}`, dto);
   }
 
   create(dto: any) {
     return this.http.post(this.API, dto);
   }
+
   delete(id: number) {
-  return this.http.delete(`${this.API}/${id}`);
-}
+    return this.http.delete(`${this.API}/${id}`);
+  }
 }

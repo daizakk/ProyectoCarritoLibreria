@@ -126,7 +126,7 @@ export class AdminPageComponent implements OnInit {
   saveEdit() {
     const product = this.editingProduct();
     if (!product) return;
-    this.productService.update(product.id, this.editForm()).subscribe({
+    this.productService.update(product.isbn, this.editForm()).subscribe({
       next: () => { this.productsFacade.loadProducts(); this.showEditModal.set(false); },
       error: () => alert('Error al guardar cambios')
     });
